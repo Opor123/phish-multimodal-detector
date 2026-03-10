@@ -1,5 +1,5 @@
 data/
+*.zip
 __pycache__/
-*.pyc
-.env
 .ipynb_checkpoints
+*.pyc
