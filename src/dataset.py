@@ -113,15 +113,36 @@ class PhishingDataset(Dataset):
             if not sample_dir.is_dir():
                 continue
 
-            # Some samples store the URL as 'URL.txt' (capital) rather than
-            # 'url.txt' (lowercase as the config expects). Try all casings.
+            # Resolve the URL file with a tiered fallback strategy:
+            #   1. Exact filename from config (e.g. "url.txt")
+            #   2. All-caps variant        (e.g. "URL.TXT")
+            #   3. Capitalised variant     (e.g. "Url.txt")
+            #   4. Any *.txt file present in the URL subdirectory
+            # This handles the naming inconsistencies found in Phish360 where
+            # some samples store the file under a different name entirely.
             _url_dir = sample_dir / config.URL_SUBDIR
             _url_candidates = [
                 _url_dir / config.URL_FILENAME,
                 _url_dir / config.URL_FILENAME.upper(),
                 _url_dir / config.URL_FILENAME.capitalize(),
             ]
-            url_path = next((p for p in _url_candidates if p.exists()), _url_candidates[0])
+            url_path = next((p for p in _url_candidates if p.exists()), None)
+
+            if url_path is None and _url_dir.is_dir():
+                # Last resort: pick the first .txt file found in the URL dir.
+                txt_files = sorted(_url_dir.glob("*.txt"))
+                if txt_files:
+                    url_path = txt_files[0]
+                    logger.debug(
+                        "Resolved URL file via glob for %s → %s",
+                        sample_dir.name, url_path.name,
+                    )
+
+            # If still unresolved, set a non-existent sentinel so the
+            # missing-file check below surfaces a clear warning.
+            if url_path is None:
+                url_path = _url_candidates[0]
+
             img_path = sample_dir / config.SCREENSHOT_SUBDIR / config.SCREENSHOT_FILENAME
             lbl_path = sample_dir / config.LABEL_SUBDIR / config.LABEL_FILENAME
 
