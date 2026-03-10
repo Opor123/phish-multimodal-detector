@@ -123,6 +123,8 @@ class PhishingDataset(Dataset):
                 logger.warning("Skipping %s – missing files: %s", sample_dir.name, missing)
                 continue
 
+            # lbl_path layout: <sample_dir>/Label/label.txt
+            # _parse_label walks up two levels to read the sample folder prefix.
             label = self._parse_label(lbl_path)
             if label is None:
                 logger.warning("Skipping %s – unrecognised label.", sample_dir.name)
@@ -145,25 +147,34 @@ class PhishingDataset(Dataset):
         """
         Parse label using folder naming convention in Phish360.
 
-        Pxxxxx_*  → phishing
-        Lxxxxx_*  → legitimate
+        The label file contains the brand name (e.g. "google", "paypal") for
+        phishing samples — NOT the string "phishing". So we derive the class
+        from the sample folder name prefix instead:
+
+            Pxxxxx_*  → phishing   (label 1)
+            Lxxxxx_*  → legitimate (label 0)
+
+        label_path layout: <sample_dir>/Label/label.txt
+        → label_path.parent        = <sample_dir>/Label/
+        → label_path.parent.parent = <sample_dir>
         """
+        folder = label_path.parent.parent.name
+        prefix = folder[0].upper() if folder else ""
 
-        folder = label_path.parent.parent.name.lower()
-
-        if folder.startswith("p"):
+        if prefix == "P":
             return 1  # phishing
-
-        if folder.startswith("l"):
+        if prefix == "L":
             return 0  # legitimate
 
-        logger.warning(f"Unknown folder label format: {folder}")
+        logger.warning("Unknown folder prefix '%s' for folder: %s", prefix, folder)
         return None
-    
+
     @staticmethod
     def _load_url(url_path: Path) -> str:
-        """Read url.txt and return the URL string, stripped of whitespace."""
-        return url_path.read_text(encoding="utf-8").strip()
+        """Read url.txt and return the URL string, stripped of whitespace and BOM."""
+        # utf-8-sig automatically strips the UTF-8 BOM (\ufeff) present in
+        # many Phish360 text files.
+        return url_path.read_text(encoding="utf-8-sig").strip()
 
     def _load_image(self, img_path: Path) -> torch.Tensor:
         """Open a screenshot, convert to RGB, and apply the transform pipeline."""
