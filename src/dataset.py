@@ -142,14 +142,23 @@ class PhishingDataset(Dataset):
 
     @staticmethod
     def _parse_label(label_path: Path) -> Optional[int]:
-        """Read label.txt and return 1 for phishing, 0 for legitimate, None on error."""
-        text = label_path.read_text(encoding="utf-8").strip().lower()
-        if config.PHISHING_LABEL in text:
-            return 1
-        if config.LEGITIMATE_LABEL in text:
-            return 0
-        return None
+        """Read label.txt and return 1 for phishing, 0 for legitimate."""
 
+        text = label_path.read_text(encoding="utf-8").strip().lower()
+
+        # handle multiple possible formats
+        phishing_labels = ["phishing", "phish", "1", "malicious"]
+        legitimate_labels = ["legitimate", "benign", "0"]
+
+        if any(p in text for p in phishing_labels):
+            return 1
+
+        if any(l in text for l in legitimate_labels):
+            return 0
+
+        logger.warning(f"Unknown label format: {text}")
+        return None
+    
     @staticmethod
     def _load_url(url_path: Path) -> str:
         """Read url.txt and return the URL string, stripped of whitespace."""
