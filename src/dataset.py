@@ -142,21 +142,22 @@ class PhishingDataset(Dataset):
 
     @staticmethod
     def _parse_label(label_path: Path) -> Optional[int]:
-        """Read label.txt and return 1 for phishing, 0 for legitimate."""
+        """
+        Parse label using folder naming convention in Phish360.
 
-        text = label_path.read_text(encoding="utf-8").strip().lower()
+        Pxxxxx_*  → phishing
+        Lxxxxx_*  → legitimate
+        """
 
-        # handle multiple possible formats
-        phishing_labels = ["phishing", "phish", "1", "malicious"]
-        legitimate_labels = ["legitimate", "benign", "0"]
+        folder = label_path.parent.parent.name.lower()
 
-        if any(p in text for p in phishing_labels):
-            return 1
+        if folder.startswith("p"):
+            return 1  # phishing
 
-        if any(l in text for l in legitimate_labels):
-            return 0
+        if folder.startswith("l"):
+            return 0  # legitimate
 
-        logger.warning(f"Unknown label format: {text}")
+        logger.warning(f"Unknown folder label format: {folder}")
         return None
     
     @staticmethod
