@@ -113,7 +113,15 @@ class PhishingDataset(Dataset):
             if not sample_dir.is_dir():
                 continue
 
-            url_path = sample_dir / config.URL_SUBDIR / config.URL_FILENAME
+            # Some samples store the URL as 'URL.txt' (capital) rather than
+            # 'url.txt' (lowercase as the config expects). Try all casings.
+            _url_dir = sample_dir / config.URL_SUBDIR
+            _url_candidates = [
+                _url_dir / config.URL_FILENAME,
+                _url_dir / config.URL_FILENAME.upper(),
+                _url_dir / config.URL_FILENAME.capitalize(),
+            ]
+            url_path = next((p for p in _url_candidates if p.exists()), _url_candidates[0])
             img_path = sample_dir / config.SCREENSHOT_SUBDIR / config.SCREENSHOT_FILENAME
             lbl_path = sample_dir / config.LABEL_SUBDIR / config.LABEL_FILENAME
 
