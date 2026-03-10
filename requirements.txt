@@ -1,0 +1,18 @@
+# ─── Core deep-learning stack ─────────────────────────────────────────────── #
+torch
+torchvision
+
+# ─── HuggingFace ecosystem ────────────────────────────────────────────────── #
+transformers
+tokenizers
+
+# ─── Image handling ───────────────────────────────────────────────────────── #
+Pillow
+opencv-python-headless  # optional – swap Pillow for CV2 if preferred
+
+# ─── Metrics & evaluation ─────────────────────────────────────────────────── #
+scikit-learn
+numpy
+
+# ─── Utilities ────────────────────────────────────────────────────────────── #
+tqdm
