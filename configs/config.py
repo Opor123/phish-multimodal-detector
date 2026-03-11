@@ -22,6 +22,8 @@ class Config:
     # Where to save / load model checkpoints.
     CHECKPOINT_DIR: str = os.path.join(ROOT_DIR, "checkpoints")
 
+    
+
     # ------------------------------------------------------------------ #
     #  Dataset                                                             #
     # ------------------------------------------------------------------ #
